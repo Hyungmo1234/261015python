@@ -1,6 +1,7 @@
 # Python·Cursor CLI로 하루 배운 것 정리
 
 > 작성일: 2026-10-16  
+> 공부 시간: 약 08:56 ~ 11:30 (약 2시간 30분, 오전)  
 > 환경: Windows + WSL2, Cursor CLI
 
 오늘은 Cursor CLI로 Python을 만지면서, **실행 환경**과 **언어 문법**을 같이 짚어봤다.

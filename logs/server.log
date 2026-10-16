@@ -1,0 +1,6 @@
+2024-06-02 10:00:00 INFO Server started
+2024-06-02 10:05:00 WARN High memory usage detected
+2024-06-02 10:10:00 ERROR Database connection failed
+2024-06-02 10:15:00 INFO User logged in
+2024-06-02 10:20:00 WARN Disk space low
+2024-06-02 10:25:00 ERROR Failed to send email

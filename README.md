@@ -29,13 +29,17 @@ python3 pr_1.py
 
 ## 매일 자동 노트 (12:30, Agent 불필요)
 
-Cursor Agent를 켜지 않아도 **Windows 작업 스케줄러**가 백그라운드에서 전날 활동을 모아 `notes/YYYY-MM-DD-day.md` 를 쓰고, 공부량이 있으면 git push 합니다.
+Cursor Agent를 켜지 않아도 **Windows 작업 스케줄러**가 백그라운드에서 활동을 모아 `notes/YYYY-MM-DD-day.md` 를 쓰고, 공부량이 있으면 git push 합니다.
 
 - **대상:** `C:\Users\LT-013`(및 Desktop) 아래 **프로그램 소스로 판별된 작업 폴더** + Cursor agent-transcripts  
   - 새 폴더가 생기면 `.py`/`.js`/`package.json` 등으로 소스 프로젝트인지 구분 → 맞으면 `notes/tracked-projects.json`에 편입 후 기존과 같이 추적·기록·요약  
   - 요약/기록 포맷은 그대로 (`YYYY-MM-DD-day.md`, study-log)
 - **시간:** 매일 12:30 (`261015python-DailyStudyNote`)
-- **규칙:** 공부량이 있을 때만 노트 + push (주말도 동일). 이미 수동으로 쓴 day 노트는 기본적으로 덮어쓰지 않음 (`--force` 시 덮어씀)
+- **날짜 규칙:**
+  - **평일(화~금):** 전날(어제) 1일
+  - **월요일:** **금·토·일** 3일을 한 번에 보고, 공부량 있는 날만 노트 + 한 번에 push
+  - 주말에 공부했으면 월요일에 반영 (토·일 단독 스케줄은 없음 — 월요일이 주말분 담당)
+- **규칙:** 공부량이 있을 때만 노트 + push. 이미 수동으로 쓴 day 노트는 기본적으로 덮어쓰지 않음 (`--force` 시 덮어씀)
 - **절전:** `StartWhenAvailable` — 잠들어 12:30을 놓치면 깨어난 뒤 실행
 - **로그:** `logs/daily_study_*.log`
 

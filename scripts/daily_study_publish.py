@@ -173,7 +173,7 @@ def local_path(key_or_path: Path | str) -> Path | None:
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Publish previous-day study notes to git")
-    p.add_argument("--date", help="대상 날짜 YYYY-MM-DD (기본: 어제)")
+    p.add_argument("--date", help="대상 날짜 YYYY-MM-DD (지정 시 해당일만). 기본: 평일은 어제, 월요일은 금·토·일")
     p.add_argument("--dry-run", action="store_true", help="파일/커밋/푸시 없이 미리보기")
     p.add_argument(
         "--force",
@@ -188,10 +188,19 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-def target_day(args: argparse.Namespace) -> date:
+def target_days(args: argparse.Namespace) -> list[date]:
+    """처리할 날짜 목록.
+
+    - --date 지정: 그 날만
+    - 기본(스케줄): 월요일이면 금·토·일(3일), 그 외는 어제 1일
+    """
     if args.date:
-        return date.fromisoformat(args.date)
-    return date.today() - timedelta(days=1)
+        return [date.fromisoformat(args.date)]
+    today = date.today()
+    if today.weekday() == 0:  # Monday
+        # 금(today-3), 토(today-2), 일(today-1)
+        return [today - timedelta(days=k) for k in (3, 2, 1)]
+    return [today - timedelta(days=1)]
 
 
 def is_weekend(d: date) -> bool:
@@ -632,17 +641,24 @@ def run_git(args: list[str]) -> subprocess.CompletedProcess[str]:
     )
 
 
-def publish(d: date, note: Path, dry_run: bool, no_push: bool) -> int:
-    msg = f"Add daily study summary for {d.isoformat()}"
+def publish_paths(label: str, paths: list[Path], dry_run: bool, no_push: bool) -> int:
+    """여러 노트/로그를 한 번에 add·commit·push."""
     if dry_run or no_push:
-        print(f"[{'dry-run' if dry_run else 'no-push'}] skip commit/push: {msg}")
+        print(f"[{'dry-run' if dry_run else 'no-push'}] skip commit/push: {label}")
         return 0
 
-    rel_note = str(note.relative_to(REPO_ROOT)).replace("\\", "/")
-    rel_log = str(STUDY_LOG.relative_to(REPO_ROOT)).replace("\\", "/")
-    to_add = [rel_note, rel_log]
+    to_add: list[str] = []
+    for path in paths:
+        if path.exists():
+            to_add.append(str(path.relative_to(REPO_ROOT)).replace("\\", "/"))
     if TRACKED_FILE.exists():
-        to_add.append(str(TRACKED_FILE.relative_to(REPO_ROOT)).replace("\\", "/"))
+        rel = str(TRACKED_FILE.relative_to(REPO_ROOT)).replace("\\", "/")
+        if rel not in to_add:
+            to_add.append(rel)
+    if not to_add:
+        print("커밋할 파일 없음 - push 생략")
+        return 0
+
     add = run_git(["add", "--", *to_add])
     if add.returncode != 0:
         print(add.stderr, file=sys.stderr)
@@ -653,7 +669,7 @@ def publish(d: date, note: Path, dry_run: bool, no_push: bool) -> int:
         print("변경 사항 없음 - push 생략")
         return 0
 
-    commit = run_git(["commit", "-m", msg])
+    commit = run_git(["commit", "-m", label])
     if commit.returncode != 0:
         print(commit.stdout)
         print(commit.stderr, file=sys.stderr)
@@ -665,48 +681,21 @@ def publish(d: date, note: Path, dry_run: bool, no_push: bool) -> int:
         print(push.stderr, file=sys.stderr)
         return push.returncode
 
-    print(f"푸시 완료: {d.isoformat()} → {note.name}")
+    print(f"푸시 완료: {label}")
     return 0
 
 
-def main() -> int:
-    try:
-        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
-
-    args = parse_args()
-    LOG_DIR.mkdir(parents=True, exist_ok=True)
-    d = target_day(args)
-    roots, newly = discover_program_projects()
-    if not args.dry_run:
-        save_tracked(roots)
-    print(f"대상 날짜: {d.isoformat()} ({WEEKDAY_KR[d.weekday()]})")
-    print(f"추적 프로젝트({len(roots)}): {[str(p) for p in roots]}")
-    if newly:
-        print(f"신규 프로그램 소스 편입: {[str(p) for p in newly]}")
-    else:
-        print("신규 프로그램 소스 편입: 없음")
-    print(f"transcript: {[str(p) for p in existing_transcript_roots()]}")
-
+def process_one_day(
+    d: date,
+    roots: list[str],
+    args: argparse.Namespace,
+) -> Path | None:
+    """하루치 노트/로그 갱신. 활동 없으면 None."""
+    print(f"--- {d.isoformat()} ({WEEKDAY_KR[d.weekday()]}) ---")
     items = collect_files(d, roots)
     if not items:
-        print("공부량 없음 - day 노트/푸시 생략")
-        # 신규 프로그램 폴더만 편입된 날은 추적 목록만이라도 커밋
-        if newly and not args.dry_run and not args.no_push:
-            rel = str(TRACKED_FILE.relative_to(REPO_ROOT)).replace("\\", "/")
-            run_git(["add", "--", rel])
-            st = run_git(["status", "--porcelain", "--", rel])
-            if st.stdout.strip():
-                run_git(["commit", "-m", f"Track new program projects ({d.isoformat()})"])
-                push = run_git(["push", "origin", "HEAD"])
-                if push.returncode == 0:
-                    print("추적 목록만 푸시 완료:", [str(x) for x in newly])
-                else:
-                    print(push.stderr, file=sys.stderr)
-                    return push.returncode
-        return 0
+        print("공부량 없음 - 생략")
+        return None
 
     if is_weekend(d):
         print("주말 + 공부량 감지 -> 등록 진행")
@@ -717,7 +706,6 @@ def main() -> int:
     out = day_note_path(d)
 
     if out.exists() and not args.force and not args.dry_run:
-        # 수동으로 잘 쓴 노트가 있으면 내용 유지, 로그 행만 맞춤
         print(f"노트 이미 존재: {out.name} (내용 유지, --force 시 덮어씀)")
     else:
         content = build_note(d, items, queries)
@@ -735,7 +723,57 @@ def main() -> int:
     else:
         print(f"[dry-run] study-log: {d} | {start_s}~{end_s} | {duration} | {topics}")
 
-    return publish(d, out, args.dry_run, args.no_push)
+    return out
+
+
+def main() -> int:
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+    args = parse_args()
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    days = target_days(args)
+    roots, newly = discover_program_projects()
+    if not args.dry_run:
+        save_tracked(roots)
+
+    print(
+        "대상 날짜: "
+        + ", ".join(f"{d.isoformat()}({WEEKDAY_KR[d.weekday()]})" for d in days)
+    )
+    if len(days) > 1:
+        print("월요일 배치: 금·토·일 일괄 처리")
+    print(f"추적 프로젝트({len(roots)}): {roots}")
+    if newly:
+        print(f"신규 프로그램 소스 편입: {newly}")
+    else:
+        print("신규 프로그램 소스 편입: 없음")
+    print(f"transcript: {[str(p) for p in existing_transcript_roots()]}")
+
+    note_paths: list[Path] = []
+    for d in days:
+        note = process_one_day(d, roots, args)
+        if note is not None:
+            note_paths.append(note)
+
+    if not note_paths:
+        print("처리할 공부량 없음 - day 노트/푸시 생략")
+        if newly and not args.dry_run and not args.no_push:
+            return publish_paths(
+                f"Track new program projects ({date.today().isoformat()})",
+                [TRACKED_FILE],
+                args.dry_run,
+                args.no_push,
+            )
+        return 0
+
+    paths = list(note_paths) + [STUDY_LOG]
+    labels = ", ".join(d.isoformat() for d in days if day_note_path(d) in note_paths)
+    msg = f"Add daily study summary for {labels}"
+    return publish_paths(msg, paths, args.dry_run, args.no_push)
 
 
 if __name__ == "__main__":

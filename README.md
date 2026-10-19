@@ -27,20 +27,32 @@ python3 pr_1.py
 
 학습 노트: [notes/2026-10-16-cursor-python.md](notes/2026-10-16-cursor-python.md)
 
-## 매일 자동 노트 (12:30)
+## 매일 자동 노트 (12:30, Agent 불필요)
 
-- **대상:** 전날 공부 (파일 변경·Cursor transcript 기준)
-- **시간:** 매일 12:30 (Windows 작업 스케줄러 → WSL)
-- **규칙:** 공부량이 있을 때만 노트 작성 + GitHub push  
-  주말도 공부량이 있을 때만 등록 (없으면 생략)
-- **절전 모드:** PC가 잠자면 해당 시각에는 실행되지 않음 (깨어난 뒤 수동 실행 가능)
+Cursor Agent를 켜지 않아도 **Windows 작업 스케줄러**가 백그라운드에서 전날 활동을 모아 `notes/YYYY-MM-DD-day.md` 를 쓰고, 공부량이 있으면 git push 합니다.
+
+- **대상:** `C:\Users\LT-013` 아래 `261015python` / `playChrome` / `lecture-kit` 파일 + Cursor agent-transcripts
+- **시간:** 매일 12:30 (`261015python-DailyStudyNote`)
+- **규칙:** 공부량이 있을 때만 노트 + push (주말도 동일). 이미 수동으로 쓴 day 노트는 기본적으로 덮어쓰지 않음 (`--force` 시 덮어씀)
+- **절전:** `StartWhenAvailable` — 잠들어 12:30을 놓치면 깨어난 뒤 실행
+- **로그:** `logs/daily_study_*.log`
+
+스케줄 등록/갱신 (최초 1회 또는 설정 변경 시):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\Users\LT-013\261015python\scripts\install_daily_study_task.ps1
+```
 
 수동 실행:
 
-```bash
-# 어제분
-./scripts/run_daily_study.sh
+```bat
+REM Windows
+C:\Users\LT-013\261015python\scripts\run_daily_study.cmd
+C:\Users\LT-013\261015python\scripts\run_daily_study.cmd --dry-run
+```
 
-# 특정 날짜 / 미리보기
+```bash
+# WSL
+./scripts/run_daily_study.sh
 python3 scripts/daily_study_publish.py --date 2026-10-16 --dry-run
 ```

@@ -31,7 +31,9 @@ python3 pr_1.py
 
 Cursor Agent를 켜지 않아도 **Windows 작업 스케줄러**가 백그라운드에서 전날 활동을 모아 `notes/YYYY-MM-DD-day.md` 를 쓰고, 공부량이 있으면 git push 합니다.
 
-- **대상:** `C:\Users\LT-013` 아래 `261015python` / `playChrome` / `lecture-kit` 파일 + Cursor agent-transcripts
+- **대상:** `C:\Users\LT-013`(및 Desktop) 아래 **프로그램 소스로 판별된 작업 폴더** + Cursor agent-transcripts  
+  - 새 폴더가 생기면 `.py`/`.js`/`package.json` 등으로 소스 프로젝트인지 구분 → 맞으면 `notes/tracked-projects.json`에 편입 후 기존과 같이 추적·기록·요약  
+  - 요약/기록 포맷은 그대로 (`YYYY-MM-DD-day.md`, study-log)
 - **시간:** 매일 12:30 (`261015python-DailyStudyNote`)
 - **규칙:** 공부량이 있을 때만 노트 + push (주말도 동일). 이미 수동으로 쓴 day 노트는 기본적으로 덮어쓰지 않음 (`--force` 시 덮어씀)
 - **절전:** `StartWhenAvailable` — 잠들어 12:30을 놓치면 깨어난 뒤 실행

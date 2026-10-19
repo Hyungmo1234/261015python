@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """전날 공부/수업 활동을 모아 day 요약 노트를 쓰고, 공부량이 있으면 git push.
 
-Cursor Agent를 띄울 필요 없이 Windows 작업 스케줄러(또는 수동 실행)로 동작한다.
+Cursor Agent 없이 Windows 작업 스케줄러로 동작한다.
+C:\\Users\\LT-013 아래 새 폴더가 생기면 프로그램 소스인지 판별해,
+맞으면 기존 작업물과 같이 추적·기록·요약한다.
 """
 
 from __future__ import annotations
@@ -29,20 +31,54 @@ SKIP_DIRS = {
     ".cache",
     "audio",
     "site-packages",
+    ".cursor",
+    ".vscode",
+    ".vscode-shared",
+    ".copilot",
+    ".local",
+    ".grokbot",
 }
 
-# C:\\Users\\LT-013 아래 공부·수업 관련 루트
+# C:\Users\LT-013 아래 작업 폴더 탐색
 USER_HOME_CANDIDATES = [
     Path("/mnt/c/Users/LT-013"),
     Path(r"C:\Users\LT-013"),
 ]
 
-PROJECT_RELATIVE = [
-    "261015python",
-    "playChrome",
-    "lecture-kit",
-    Path("Desktop") / "lecture-kit",
-]
+# 홈 바로 아래 / Desktop 에서 제외할 이름 (프로그램 소스 후보가 아님)
+SKIP_TOP_LEVEL = {
+    "AppData",
+    "Application Data",
+    "Cookies",
+    "Local Settings",
+    "NetHood",
+    "PrintHood",
+    "Recent",
+    "SendTo",
+    "Templates",
+    "My Documents",
+    "Contacts",
+    "Favorites",
+    "Links",
+    "Music",
+    "Videos",
+    "Searches",
+    "Saved Games",
+    "OneDrive",
+    "Downloads",
+    "Documents",
+    "Pictures",
+    "사진",
+    "문서",
+    "Desktop",  # Desktop 자체는 스캔 루트가 아니라, 그 안 하위 폴더를 따로 본다
+    ".cache",
+    ".cursor",
+    ".vscode",
+    ".vscode-shared",
+    ".copilot",
+    ".local",
+    ".grokbot",
+}
 
 TRANSCRIPT_CANDIDATES = [
     Path.home() / ".cursor" / "projects",
@@ -52,14 +88,87 @@ TRANSCRIPT_CANDIDATES = [
 ]
 
 WEEKDAY_KR = ["월", "화", "수", "목", "금", "토", "일"]
-CODE_SUFFIXES = {".py", ".md", ".js", ".css", ".json", ".bat", ".cmd", ".txt", ".log"}
 
+# 활동 파일로 기록·요약에 넣는 확장자 (기존과 동일하게 md/로그 포함)
+ACTIVITY_SUFFIXES = {".py", ".md", ".js", ".ts", ".tsx", ".jsx", ".css", ".html", ".json", ".bat", ".cmd", ".ps1", ".txt", ".log"}
+
+# 프로그램 소스 프로젝트 판별용
+SOURCE_SUFFIXES = {
+    ".py", ".js", ".ts", ".tsx", ".jsx", ".mjs", ".cjs",
+    ".java", ".kt", ".go", ".rs", ".c", ".cc", ".cpp", ".h", ".hpp",
+    ".cs", ".swift", ".rb", ".php", ".scala",
+    ".vue", ".svelte", ".css", ".scss", ".html",
+    ".bat", ".cmd", ".ps1", ".sh",
+}
+SOURCE_MARKERS = {
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "pyproject.toml",
+    "requirements.txt",
+    "setup.py",
+    "Pipfile",
+    "Cargo.toml",
+    "go.mod",
+    "pom.xml",
+    "build.gradle",
+    "CMakeLists.txt",
+    "Makefile",
+    "Gemfile",
+    "composer.json",
+    "manifest.json",  # 크롬 확장 등
+    "tsconfig.json",
+}
+
+TRACKED_FILE = NOTES_DIR / "tracked-projects.json"
 
 def user_home() -> Path | None:
     for p in USER_HOME_CANDIDATES:
         if p.exists():
             return p
     return None
+
+
+
+def storage_key(path: Path | str) -> str:
+    """추적 목록 공통 키: 항상 C:/Users/... 문자열."""
+    s = str(path).replace("\\", "/")
+    if "/C:/" in s:
+        s = "C:/" + s.split("/C:/")[-1]
+    if s.startswith("/mnt/c/"):
+        return "C:/" + s[len("/mnt/c/"):]
+    if len(s) >= 2 and s[1] == ":":
+        return s[0].upper() + ":" + s[2:]
+    try:
+        resolved = str(Path(path).resolve()).replace("\\", "/")
+    except OSError:
+        return s
+    if "/C:/" in resolved:
+        resolved = "C:/" + resolved.split("/C:/")[-1]
+    if resolved.startswith("/mnt/c/"):
+        return "C:/" + resolved[len("/mnt/c/"):]
+    return resolved
+
+
+def local_path(key_or_path: Path | str) -> Path | None:
+    """현재 환경에서 walk 가능한 실제 경로."""
+    key = storage_key(key_or_path)
+    if not (len(key) >= 2 and key[1] == ":"):
+        cand = Path(str(key_or_path))
+        return cand if cand.exists() else None
+    rest = key[3:].lstrip("/")
+    candidates = [Path("/mnt/c") / rest]
+    if os.name == "nt":
+        candidates.insert(0, Path(key))
+    for c in candidates:
+        try:
+            if c.exists():
+                return c
+        except OSError:
+            continue
+    return None
+
 
 
 def parse_args() -> argparse.Namespace:
@@ -100,15 +209,102 @@ def in_day(ts: float, start: datetime, end: datetime) -> bool:
     return start <= t < end
 
 
-def existing_roots() -> list[Path]:
+def load_tracked() -> list[str]:
+    if not TRACKED_FILE.exists():
+        return []
+    try:
+        data = json.loads(TRACKED_FILE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+    if isinstance(data, dict):
+        return [str(x) for x in data.get("projects", [])]
+    if isinstance(data, list):
+        return [str(x) for x in data]
+    return []
+
+
+def save_tracked(keys: list[str]) -> None:
+    NOTES_DIR.mkdir(parents=True, exist_ok=True)
+    clean = sorted({storage_key(k) for k in keys if local_path(k) is not None}, key=str.lower)
+    payload = {
+        "updated": datetime.now().isoformat(timespec="seconds"),
+        "rule": "C:\\Users\\LT-013(+Desktop) 하위 폴더 중 프로그램 소스로 판별된 것만 추적",
+        "projects": clean,
+    }
+    TRACKED_FILE.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def candidate_folders(home: Path) -> list[Path]:
+    """홈 바로 아래 + Desktop 바로 아래 폴더 후보."""
+    out: list[Path] = []
+    try:
+        for child in home.iterdir():
+            if not child.is_dir():
+                continue
+            name = child.name
+            if name.startswith(".") or name in SKIP_TOP_LEVEL:
+                continue
+            out.append(child)
+    except OSError:
+        pass
+
+    desktop = home / "Desktop"
+    if desktop.is_dir():
+        try:
+            for child in desktop.iterdir():
+                if not child.is_dir() or child.name.startswith("."):
+                    continue
+                out.append(child)
+        except OSError:
+            pass
+    return out
+
+
+def is_program_source_project(folder: Path, max_files: int = 400) -> bool:
+    """폴더가 프로그램 소스 작업물인지 휴리스틱으로 판별."""
+    if not folder.is_dir():
+        return False
+    markers = {m.lower() for m in SOURCE_MARKERS}
+    seen = 0
+    try:
+        for dirpath, dirs, files in os.walk(folder):
+            dirs[:] = [x for x in dirs if x not in SKIP_DIRS and not x.startswith(".")]
+            for name in files:
+                seen += 1
+                if seen > max_files:
+                    return False
+                if name.lower() in markers:
+                    return True
+                if Path(name).suffix.lower() in SOURCE_SUFFIXES:
+                    return True
+    except OSError:
+        return False
+    return False
+
+
+def discover_program_projects() -> tuple[list[str], list[str]]:
+    """(추적 키 목록, 신규 편입 키). 키는 C:/Users/... 문자열."""
     home = user_home()
-    roots: list[Path] = [REPO_ROOT]
+    keys: set[str] = set()
+
+    for s in load_tracked():
+        if local_path(s) is not None:
+            keys.add(storage_key(s))
+
+    keys.add(storage_key(REPO_ROOT))
+
+    newly: list[str] = []
     if home:
-        for rel in PROJECT_RELATIVE:
-            p = home / rel
-            if p.exists() and p.resolve() not in {r.resolve() for r in roots}:
-                roots.append(p)
-    return roots
+        for cand in candidate_folders(home):
+            key = storage_key(cand)
+            if key in keys:
+                continue
+            if is_program_source_project(cand):
+                keys.add(key)
+                newly.append(key)
+
+    return sorted(keys, key=str.lower), newly
+
 
 
 def existing_transcript_roots() -> list[Path]:
@@ -128,27 +324,33 @@ def existing_transcript_roots() -> list[Path]:
     return out
 
 
-def collect_files(d: date) -> list[tuple[Path, datetime, str]]:
+def collect_files(d: date, root_keys: list[str]) -> list[tuple[Path, datetime, str]]:
     """(path, mtime, kind) kind=project|transcript|lecture"""
     start, end = day_bounds(d)
     found: list[tuple[Path, datetime, str]] = []
 
-    for root in existing_roots():
-        for dirpath, dirs, files in os.walk(root):
+    for key in root_keys:
+        walk_root = local_path(key)
+        if walk_root is None:
+            continue
+        for dirpath, dirs, files in os.walk(walk_root):
             dirs[:] = [x for x in dirs if x not in SKIP_DIRS and not x.startswith(".")]
             root_path = Path(dirpath)
-            # 자동 생성 notes 순환 방지: 같은 날 day/study는 수집하되 스크립트가 방금 쓴 파일은 나중에 덮어씀
             for name in files:
                 path = root_path / name
-                if path.suffix.lower() not in CODE_SUFFIXES:
+                if path.suffix.lower() not in ACTIVITY_SUFFIXES:
                     continue
                 if path.name.startswith("."):
                     continue
-                # 오늘 배치가 쓰는 노트는 활동 근거에서 제외
-                if path.parent.resolve() == NOTES_DIR.resolve() and (
-                    path.name.endswith("-day.md") or path.name == "study-log.md"
-                ):
-                    continue
+                try:
+                    if path.parent.resolve() == NOTES_DIR.resolve() and (
+                        path.name.endswith("-day.md")
+                        or path.name == "study-log.md"
+                        or path.name == "tracked-projects.json"
+                    ):
+                        continue
+                except OSError:
+                    pass
                 try:
                     mtime = path.stat().st_mtime
                 except OSError:
@@ -173,6 +375,7 @@ def collect_files(d: date) -> list[tuple[Path, datetime, str]]:
 
     found.sort(key=lambda x: x[1])
     return found
+
 
 
 def extract_user_queries(path: Path, limit: int = 30) -> list[tuple[str, str]]:
@@ -437,12 +640,15 @@ def publish(d: date, note: Path, dry_run: bool, no_push: bool) -> int:
 
     rel_note = str(note.relative_to(REPO_ROOT)).replace("\\", "/")
     rel_log = str(STUDY_LOG.relative_to(REPO_ROOT)).replace("\\", "/")
-    add = run_git(["add", "--", rel_note, rel_log])
+    to_add = [rel_note, rel_log]
+    if TRACKED_FILE.exists():
+        to_add.append(str(TRACKED_FILE.relative_to(REPO_ROOT)).replace("\\", "/"))
+    add = run_git(["add", "--", *to_add])
     if add.returncode != 0:
         print(add.stderr, file=sys.stderr)
         return add.returncode
 
-    status = run_git(["status", "--porcelain", "--", rel_note, rel_log])
+    status = run_git(["status", "--porcelain", "--", *to_add])
     if not status.stdout.strip():
         print("변경 사항 없음 - push 생략")
         return 0
@@ -473,13 +679,33 @@ def main() -> int:
     args = parse_args()
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     d = target_day(args)
+    roots, newly = discover_program_projects()
+    if not args.dry_run:
+        save_tracked(roots)
     print(f"대상 날짜: {d.isoformat()} ({WEEKDAY_KR[d.weekday()]})")
-    print(f"스캔 루트: {[str(p) for p in existing_roots()]}")
+    print(f"추적 프로젝트({len(roots)}): {[str(p) for p in roots]}")
+    if newly:
+        print(f"신규 프로그램 소스 편입: {[str(p) for p in newly]}")
+    else:
+        print("신규 프로그램 소스 편입: 없음")
     print(f"transcript: {[str(p) for p in existing_transcript_roots()]}")
 
-    items = collect_files(d)
+    items = collect_files(d, roots)
     if not items:
-        print("공부량 없음 - 노트/깃 작업 생략")
+        print("공부량 없음 - day 노트/푸시 생략")
+        # 신규 프로그램 폴더만 편입된 날은 추적 목록만이라도 커밋
+        if newly and not args.dry_run and not args.no_push:
+            rel = str(TRACKED_FILE.relative_to(REPO_ROOT)).replace("\\", "/")
+            run_git(["add", "--", rel])
+            st = run_git(["status", "--porcelain", "--", rel])
+            if st.stdout.strip():
+                run_git(["commit", "-m", f"Track new program projects ({d.isoformat()})"])
+                push = run_git(["push", "origin", "HEAD"])
+                if push.returncode == 0:
+                    print("추적 목록만 푸시 완료:", [str(x) for x in newly])
+                else:
+                    print(push.stderr, file=sys.stderr)
+                    return push.returncode
         return 0
 
     if is_weekend(d):

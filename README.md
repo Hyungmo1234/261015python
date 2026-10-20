@@ -2,6 +2,20 @@
 
 Python 기초 연습 저장소입니다.
 
+## 형모 프로젝트 포털 (나만의 웹)
+
+`project_hub/` — GitHub가 아닌 **브라우저용 개인 포털**. `data/portal.json`에 프로젝트를 저장하고 웹에서 등록·수정합니다.
+
+```bash
+cd project_hub
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+export PROJECTS_BASE=/path/to/parent-of-repos
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+```
+
+자세한 내용: [project_hub/README.md](project_hub/README.md)
+
 ## 구성
 
 | 파일 | 설명 |

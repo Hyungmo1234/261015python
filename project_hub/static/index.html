@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>형모 프로젝트 포털</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap top-row">
+        <div>
+          <p class="eyebrow" id="owner-line">My Portal</p>
+          <h1 id="portal-title">형모 프로젝트 포털</h1>
+          <p class="lead" id="portal-subtitle"></p>
+        </div>
+        <button type="button" class="btn primary" id="btn-manage">프로젝트 관리</button>
+      </div>
+      <div class="wrap meta" id="meta"></div>
+    </header>
+    <main class="wrap">
+      <div id="grid" class="grid" aria-live="polite"></div>
+    </main>
+
+    <dialog id="detail-dialog" class="dialog">
+      <article id="detail-body"></article>
+    </dialog>
+
+    <dialog id="manage-dialog" class="dialog wide">
+      <form id="project-form" class="form">
+        <header class="dialog-head">
+          <h2>프로젝트 등록 · 수정</h2>
+          <button type="button" class="btn ghost" data-close>닫기</button>
+        </header>
+        <p class="hint">
+          GitHub 없이도 이름·설명·URL·메모만으로 등록할 수 있습니다. 서버에 소스 폴더가
+          있으면 <code>scan_dir</code>로 Git/README를 자동 보강합니다.
+        </p>
+        <label>편집 토큰 (서버에 <code>PORTAL_EDIT_TOKEN</code> 설정 시)</label>
+        <input type="password" id="edit-token" autocomplete="off" placeholder="선택" />
+        <div class="two-col">
+          <label>이름<input required name="name" id="f-name" /></label>
+          <label>상태
+            <select name="status" id="f-status">
+              <option value="active">진행 중</option>
+              <option value="idea">아이디어</option>
+              <option value="paused">일시 중단</option>
+              <option value="done">완료</option>
+            </select>
+          </label>
+        </div>
+        <label>한 줄 설명<textarea name="description" id="f-desc" rows="2"></textarea></label>
+        <label>태그 (쉼표 구분)<input name="tags" id="f-tags" placeholder="Python, Web" /></label>
+        <div class="two-col">
+          <label>서비스 URL<input name="site_url" id="f-site" placeholder="https://..." /></label>
+          <label>저장소 URL (선택)<input name="repo_url" id="f-repo" placeholder="https://github.com/..." /></label>
+        </div>
+        <label>메모<textarea name="notes" id="f-notes" rows="2"></textarea></label>
+        <label>소스 폴더명 (선택, PROJECTS_BASE 아래)<input name="scan_dir" id="f-scan" placeholder="prophecy" /></label>
+        <input type="hidden" id="f-id" />
+        <footer class="form-actions">
+          <button type="button" class="btn danger hidden" id="btn-delete">삭제</button>
+          <button type="submit" class="btn primary">저장</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script src="/static/app.js" type="module"></script>
+  </body>
+</html>

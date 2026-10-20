@@ -1,8 +1,9 @@
 {
-  "updated": "2026-10-19T12:56:41",
+  "updated": "2026-10-20T12:30:04",
   "rule": "C:\\Users\\LT-013(+Desktop) 하위 폴더 중 프로그램 소스로 판별된 것만 추적",
   "projects": [
     "C:/Users/LT-013/261015python",
+    "C:/Users/LT-013/Desktop/kakao-cursor-agent",
     "C:/Users/LT-013/Desktop/lecture-kit",
     "C:/Users/LT-013/lecture-kit",
     "C:/Users/LT-013/playChrome"

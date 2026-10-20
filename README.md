@@ -2,6 +2,20 @@
 
 Python 기초 연습 저장소입니다.
 
+## 프로젝트 허브 (웹)
+
+`project_hub/` — 연결된 저장소(261015python, mobile_invitationByCursor, prophecy 등) 정보를 한 페이지에서 보는 대시보드.
+
+```bash
+cd project_hub
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+export PROJECTS_BASE=/path/to/parent-of-repos
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
+```
+
+자세한 내용: [project_hub/README.md](project_hub/README.md)
+
 ## 구성
 
 | 파일 | 설명 |

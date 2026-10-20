@@ -1,0 +1,59 @@
+{
+  "projects": [
+    {
+      "id": "261015python",
+      "name": "261015python",
+      "description": "Python 기초 연습 및 일일 학습 노트 자동화",
+      "repo": "https://github.com/Hyungmo1234/261015python",
+      "dir": "261015python",
+      "tags": ["Python", "학습"],
+      "status_doc": null,
+      "links": []
+    },
+    {
+      "id": "mobile_invitation",
+      "name": "모바일 청첩장",
+      "description": "Next.js 모바일 청첩장 웹앱",
+      "repo": "https://github.com/Hyungmo1234/mobile_invitationByCursor",
+      "dir": "mobile_invitationByCursor",
+      "tags": ["Next.js", "React", "Tailwind"],
+      "status_doc": null,
+      "links": [
+        { "label": "실행 가이드", "path": "실행가이드.md" },
+        { "label": "배포 가이드", "path": "배포가이드.md" }
+      ]
+    },
+    {
+      "id": "prophecy",
+      "name": "Prophecy",
+      "description": "AI 부동산 인텔리전스 — MOLIT·K-APT 데이터 파이프라인 및 웹 조회",
+      "repo": "https://github.com/Hyungmo1234/prophecy",
+      "dir": "prophecy",
+      "tags": ["Python", "Vite", "PostgreSQL", "ML"],
+      "status_doc": "docs/STATUS.md",
+      "links": [
+        { "label": "작업 상태", "path": "docs/STATUS.md" },
+        { "label": "사용자 입력 필요", "path": "docs/NEED_FROM_USER.md" },
+        { "label": "아키텍처", "path": "docs/ARCHITECTURE.md" }
+      ],
+      "dev": {
+        "web": "frontend/web — npm run dev → http://localhost:5173"
+      }
+    },
+    {
+      "id": "kakao_cursor_agent",
+      "name": "kakao-cursor-agent",
+      "description": "카카오톡 ↔ Cursor Cloud Agent 연동 (로컬 Desktop 경로)",
+      "repo": null,
+      "dir": "kakao-cursor-agent",
+      "local_only": true,
+      "local_paths": [
+        "C:/Users/LT-013/Desktop/kakao-cursor-agent",
+        "/mnt/c/Users/LT-013/Desktop/kakao-cursor-agent"
+      ],
+      "tags": ["Kakao", "Agent"],
+      "status_doc": null,
+      "links": []
+    }
+  ]
+}

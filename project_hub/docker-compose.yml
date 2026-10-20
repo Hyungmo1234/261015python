@@ -1,0 +1,14 @@
+services:
+  portal:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+    environment:
+      PORTAL_DATA_DIR: /app/data
+      PROJECTS_BASE: /repos
+    # 로컬 소스 스캔을 쓰려면 아래 주석 해제 후 경로 맞추기
+    # volumes:
+    #   - ./data:/app/data
+    #   - /path/to/your/repos:/repos:ro

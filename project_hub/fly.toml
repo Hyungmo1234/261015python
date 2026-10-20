@@ -6,6 +6,11 @@ primary_region = "nrt"
 
 [env]
   PROJECTS_BASE = "/repos"
+  PORTAL_DATA_DIR = "/app/data"
+
+[mounts]
+  source = "portal_data"
+  destination = "/app/data"
 
 [http_service]
   internal_port = 8080

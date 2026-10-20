@@ -2,9 +2,9 @@
 
 Python 기초 연습 저장소입니다.
 
-## 프로젝트 허브 (웹)
+## 형모 프로젝트 포털 (나만의 웹)
 
-`project_hub/` — 연결된 저장소(261015python, mobile_invitationByCursor, prophecy 등) 정보를 한 페이지에서 보는 대시보드.
+`project_hub/` — GitHub가 아닌 **브라우저용 개인 포털**. `data/portal.json`에 프로젝트를 저장하고 웹에서 등록·수정합니다.
 
 ```bash
 cd project_hub

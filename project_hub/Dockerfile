@@ -11,8 +11,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 COPY config ./config
 COPY static ./static
+COPY data ./data
 
 ENV PROJECTS_BASE=/repos
+ENV PORTAL_DATA_DIR=/app/data
 ENV PORT=8080
 
 # Fly/CI: 공개 GitHub 저장소를 빌드 시 clone (로컬 docker build --build-arg CLONE_REPOS=0 로 생략 가능)

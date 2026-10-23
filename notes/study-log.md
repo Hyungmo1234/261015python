@@ -16,3 +16,5 @@
 | 크롬 확장 | `C:\Users\LT-013\playChrome` |
 | 강의 받아쓰기 | `C:\Users\LT-013\lecture-kit` |
 | Grokbot 설정 | `C:\Users\LT-013\.grokbot` |
+
+| 2026-10-22 (목) | 09:06 ~ 17:45 | 약 8시간 38분 | 리스트/튜플·변수(이름표) / Cursor/WSL 환경 / 파이썬 연습 스크립트 / 강의 녹음/받아쓰기 | [day 요약](./2026-10-22-day.md) |

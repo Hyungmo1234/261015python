@@ -18,12 +18,16 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
 
 ## 구성
 
-| 파일 | 설명 |
+연습 파일은 `공부기록/YYYY-MM-DD/` 날짜 폴더에 모아 둡니다.
+
+| 경로 | 설명 |
 |------|------|
-| `pr_1.py` | 로그 분석기 (INFO/WARN/ERROR 건수·비율) |
-| `pr_2.py` | 타입·연산·반복 연습 |
-| `pr_3.py` | `print` 옵션 (`sep`, `end`) |
-| `pr_4input.py` | `input()` 연습 |
+| `공부기록/2026-10-16/` | `pr_1`~`pr_7` — 기초·자료형 |
+| `공부기록/2026-10-19/` | `pr_8`~`pr_12` |
+| `공부기록/2026-10-20/` | `pr_13` |
+| `공부기록/2026-10-22/` | `pr_14`~`pr_15` |
+| `공부기록/2026-10-23/` | `pr_16` — 람다 등 |
+| `공부기록/2026-10-26/` | `pr_17` — NumPy |
 | `logs/server.log` | 샘플 로그 |
 | `notes/` | 학습 정리 글 · 공부 시간 기록 |
 | `scripts/daily_study_publish.py` | 전날 공부 노트 자동 작성 + push |
@@ -33,10 +37,10 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
 
 ```bash
 # Windows
-python pr_1.py
+python 공부기록/2026-10-26/pr_17.py
 
 # WSL
-python3 pr_1.py
+python3 공부기록/2026-10-26/pr_17.py
 ```
 
 학습 노트: [notes/2026-10-16-cursor-python.md](notes/2026-10-16-cursor-python.md)

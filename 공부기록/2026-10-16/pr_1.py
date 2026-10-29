@@ -1,6 +1,13 @@
+from pathlib import Path
+
 import pr_2
+
 print(pr_2.s)
 print("=== Python Log Analyzer ===")
+
+# 공부기록/날짜/ 아래에서도 루트 logs 를 찾도록
+REPO_ROOT = Path(__file__).resolve().parents[2]
+LOG_PATH = REPO_ROOT / "logs" / "server.log"
 
 def analyze_log(file_path):
     log_count = {
@@ -25,7 +32,7 @@ def analyze_log(file_path):
     return log_count, total_count
 
 def main():
-    result, total = analyze_log("logs/server.log")
+    result, total = analyze_log(LOG_PATH)
 
     print("=== Python Log Analyzer ===")
     print(f"전체 로그: {total}줄")

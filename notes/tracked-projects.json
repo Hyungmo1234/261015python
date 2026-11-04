@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-02T12:48:27",
+  "updated": "2026-11-04T12:37:59",
   "rule": "C:\\Users\\LT-013(+Desktop) 하위 폴더 중 프로그램 소스로 판별된 것만 추적",
   "projects": [
     "C:/Users/LT-013/261015python",
@@ -11,6 +11,7 @@
     "C:/Users/LT-013/Desktop/lecture-kit",
     "C:/Users/LT-013/hm-cursor-desk",
     "C:/Users/LT-013/lecture-kit",
+    "C:/Users/LT-013/newBr",
     "C:/Users/LT-013/playChrome",
     "C:/Users/LT-013/project1",
     "C:/Users/LT-013/studyAlgorithm"

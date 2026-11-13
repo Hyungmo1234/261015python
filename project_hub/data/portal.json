@@ -4,6 +4,21 @@
   "owner": "Hyungmo",
   "projects": [
     {
+      "id": "aice_mock1",
+      "name": "AICE 모의고사 1회",
+      "description": "AICE Associate 모의고사 1회 — 학생 최종 성적 예측 문제·정답·데이터",
+      "tags": ["Python", "AICE", "학습"],
+      "status": "active",
+      "site_url": null,
+      "repo_url": "https://github.com/Hyungmo1234/aice-mock1-student-score",
+      "notes": "같은 자료를 261015python 공부기록/2026-11/2026-11-13/ 에도 두었습니다.",
+      "scan_dir": "aice-mock1-student-score",
+      "status_doc": null,
+      "links": [],
+      "dev_hint": null,
+      "updated_at": "2026-11-13T13:40:00+00:00"
+    },
+    {
       "id": "261015python",
       "name": "261015python",
       "description": "Python 기초 연습 및 일일 학습 노트 자동화",
